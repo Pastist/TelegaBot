@@ -5,6 +5,8 @@ export const echoMessageUseCase = {
     const message = update.message;
     if (!message?.text) return;
 
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
     await telegramApiClient.sendReply(
       message.chat.id,
       message.message_id,
