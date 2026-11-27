@@ -3,30 +3,25 @@ import {echoMessageUseCase} from "../application/echoMessageUseCase.mjs";
 
 export const telegramPollingServer = {
   offset: 0,
-  isPolling: false,
-
-  async tick() {
-    if (telegramPollingServer.isPolling) return;
-    telegramPollingServer.isPolling = true;
-
-    try {
-      const updates = await telegramApiClient.getUpdates(telegramPollingServer.offset);
-
-      for (const update of updates) {
-        console.log(JSON.stringify(update, null, 2));
-        await echoMessageUseCase.execute(update);
-        telegramPollingServer.offset = update.update_id + 1;
-      }
-    } finally {
-      telegramPollingServer.isPolling = false;
-    }
-  },
+  intervalMs: 5000,
 
   start() {
-    setInterval(() => {
-      telegramPollingServer.tick().catch(error => {
-        console.error("Telegram polling failed:", error);
+    setInterval(() => this.poll(), this.intervalMs);
+  },
+
+  async poll() {
+    const updates = await telegramApiClient.getUpdates(this.offset);
+
+    for (const update of updates) {
+      console.log(JSON.stringify(update, null, 2));
+      this.offset = update.update_id + 1;
+
+      if (!update.message?.text) continue;
+
+      await echoMessageUseCase.execute({
+        chatId: update.message.chat.id,
+        text: update.message.text,
       });
-    }, 5000);
-  }
+    }
+  },
 };

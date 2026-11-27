@@ -1,31 +1,19 @@
 import {TELEGRAM_TOKEN} from "../../token.mjs";
 
 export const telegramApiClient = {
+  baseUrl: `https://api.telegram.org/bot${TELEGRAM_TOKEN}`,
+
   async getUpdates(offset) {
-    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/getUpdates?offset=${offset}`);
+    const response = await fetch(`${this.baseUrl}/getUpdates?offset=${offset}`);
     const data = await response.json();
-
-    if (!data.ok) {
-      throw new Error(`Telegram getUpdates failed: ${data.description}`);
-    }
-
     return data.result;
   },
 
-  async sendReply(chatId, messageId, text) {
-    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+  async sendMessage(chatId, text) {
+    await fetch(`${this.baseUrl}/sendMessage`, {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        reply_parameters: {message_id: messageId}
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text }),
     });
-    const data = await response.json();
-
-    if (!data.ok) {
-      throw new Error(`Telegram sendMessage failed: ${data.description}`);
-    }
-  }
+  },
 };
